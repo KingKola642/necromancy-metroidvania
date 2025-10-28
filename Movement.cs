@@ -10,7 +10,7 @@ public class Movement : MonoBehaviour
     public Rigidbody2D RB;
     public SpriteRenderer SR;
     public float MovementSpeed = 5f;
-    public bool Jumping;
+    public float Jumping;
     public bool Grounded;
     public Transform GroundCheck;
     public LayerMask GroundLayer;
@@ -21,6 +21,11 @@ public class Movement : MonoBehaviour
     public float LowJumpMultiplier = 2f;
     public bool NoJump = false;
     public bool NoChange;
+    public InputAction Jump;
+    [Header("Attack")]
+    public InputAction AttackKeys;
+    public bool Attack;
+    public SpriteRenderer SRHB;
 
     //accelation and decelaration PLEASE
 
@@ -28,11 +33,15 @@ public class Movement : MonoBehaviour
     void OnEnable()
     {
         MovementKeys.Enable();
+        Jump.Enable();
+        AttackKeys.Enable();
     }
 
     void OnDisable()
     {
         MovementKeys.Disable();
+        Jump.Disable();
+        AttackKeys.Disable();
     }
 
     void Start()
@@ -45,6 +54,9 @@ public class Movement : MonoBehaviour
         //sets direction of movement
         MoveDir = MovementKeys.ReadValue<Vector2>();
 
+        Jumping = Jump.ReadValue<float>();
+        Attack = AttackKeys.ReadValue<float>() > 0.5f;
+
         //checks if Grounded
         Grounded = Physics2D.OverlapBox(GroundCheck.position, OverlapSize, 0f, GroundLayer);
 
@@ -53,9 +65,18 @@ public class Movement : MonoBehaviour
             // if falling gravity is normal
             RB.gravityScale = NormalGravity * FallGravityMultiplier;
         }
-        else if (RB.linearVelocity.y > 0 & !Jumping)
+        else if (RB.linearVelocity.y > 0 & Jumping == 0)
         {
             RB.gravityScale = NormalGravity * LowJumpMultiplier;
+        }
+
+        if (Attack)
+        {
+            SRHB.enabled = true;
+        }
+        else
+        {
+            SRHB.enabled = false;
         }
     }
 
@@ -83,28 +104,20 @@ public class Movement : MonoBehaviour
             RB.linearVelocity = new Vector2(MoveDir.x * MovementSpeed, RB.linearVelocityY);
         }
 
-        //registers jump key
-        if (Input.GetKey(KeyCode.Space))
-        {
-            Jumping = true;
-        }
-        else
-        {
-            Jumping = false;
-        }
+        
 
-        if (Jumping & !Grounded)
+        if (Jumping == 1 & !Grounded)
         {
             NoJump = true;
         }
 
-        if (Grounded & !Jumping)
+        if (Grounded & Jumping == 0)
         {
             NoJump = false;
         }
 
         //jumps
-        if (Jumping & !NoJump)
+        if (Jumping == 1 & !NoJump)
         {
             RB.linearVelocity = Vector2.up * JumpStrenth;
         }
